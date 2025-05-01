@@ -13,381 +13,46 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-Public tamanhoPadrao, espacamentoPadrao, defaultFormHeight As Double
+Public tamanhoPadrao As Double
+Public espacamentoPadrao As Double
+Public defaultFormHeight As Double
 Public itensPorPagina As Integer
 Public contagem As Range
 Private Function confirmaImportacao() As Boolean
 
-confirmaImportacao = True
-
-For Each Obj In Me.Controls 'Loop em todos controle do form
-    'Se for algum dos campos de texto
-    If InStr(1, Obj.Name, "txtDescricao") >= 1 Or InStr(1, Obj.Name, "txtParticipantes") >= 1 Or InStr(1, Obj.Name, "txtInstrumentos") >= 1 Or InStr(1, Obj.Name, "txtProjecao") >= 1 Or InStr(1, Obj.Name, "listBoxTipoProjecao") >= 1 Then
-        'Se estiver preenchido
-        If Obj.Value <> "" Then
-            'Mensagem de confirmação
-            resposta = MsgBox("O formulário atual possui campos preenchidos!" & vbNewLine & "Essas informações serão perdidas!" & vbNewLine & "Deseja continuar?", vbYesNo Or vbExclamation, "CONFIRMAÇÃO")
-            'Se confirmado retorna Verdadeiro
-            If resposta = vbYes Then
-                confirmaImportacao = True
-                Exit Function 'Sai da função
-            Else
-                confirmaImportacao = False
-                Exit Function 'Sai da função
+    confirmaImportacao = True
+    
+    'Loop em todos controle do form
+    For Each Obj In Me.Controls
+        'Se for algum dos campos de texto
+        If InStr(1, Obj.Name, "txtDescricao") >= 1 Or InStr(1, Obj.Name, "txtParticipantes") >= 1 Or InStr(1, Obj.Name, "txtInstrumentos") >= 1 Or InStr(1, Obj.Name, "txtProjecao") >= 1 Or InStr(1, Obj.Name, "listBoxTipoProjecao") >= 1 Then
+            
+            If Obj.Value <> "" Then
+                'Confirmação
+                resposta = MsgBox("O formulário atual possui campos preenchidos!" & vbNewLine & "Essas informações serão perdidas!" & vbNewLine & "Deseja continuar?", vbYesNo Or vbExclamation, "CONFIRMAÇÃO")
+    
+                If resposta = vbYes Then
+                    confirmaImportacao = True
+                    Exit Function
+                Else
+                    confirmaImportacao = False
+                    Exit Function
+                End If
             End If
         End If
-    End If
-Next
-
-
-
+    Next
 End Function
-Private Function abrirArquivos(ByVal arquivo As String, ByVal extensao)
 
-Dim objShell As Object 'Tipagem
-
-Set objShell = CreateObject("Shell.Application") 'Instancia objeto shell do windows
-
-caminho = ThisWorkbook.Path & "\Programas\" & UCase(extensao) & "\" & arquivo & "." & extensao 'Caminho do arquivo a ser aberto
-
-objShell.Open (caminho) 'Abre o arquivo
-
-End Function
-Private Function verifica_pasta()
-    Dim pasta As Variant
-    pasta = ThisWorkbook.Path & "\Programas\"
-    
-    'Verifica se a pasta que salva os arquivos existe
-    If Dir(pasta, vbDirectory) = vbNullString Then 'se a pasta não existe então é criada!
-        MkDir ThisWorkbook.Path & "\Programas" ' cria a pasta programas
-        MkDir ThisWorkbook.Path & "\Programas\HTML" 'cria a pasta HTML
-        MkDir ThisWorkbook.Path & "\Programas\PDF" 'cria a pasta PDF
-        MkDir ThisWorkbook.Path & "\Programas\TXT" 'cria a pasta TXT
-        MkDir ThisWorkbook.Path & "\Programas\DOC" 'cria a pasta DOC
-        MkDir ThisWorkbook.Path & "\Programas\XLSX" 'cria a pasta XLSX
-    End If
-    
-
-End Function
-Private Function configura_impressao()
-    
-    'propriedades de impressao EXCEL'
-    With ActiveSheet.PageSetup
-        ' margens ---
-        .LeftMargin = Application.InchesToPoints(0)
-        .RightMargin = Application.InchesToPoints(0)
-        .TopMargin = Application.InchesToPoints(0.3)
-        .BottomMargin = Application.InchesToPoints(0.3)
-        .HeaderMargin = Application.InchesToPoints(0)
-        .FooterMargin = Application.InchesToPoints(0)
-        ' ----
-        .PrintHeadings = False
-        .PrintGridlines = False
-        .PrintNotes = False
-        .CenterHorizontally = True
-        .CenterVertically = False
-        .Draft = False
-        .BlackAndWhite = True
-        .FitToPagesWide = 1 'força uma largura de página
-        .FitToPagesTall = False 'Retorna ou define a altura, em número de páginas, pela qual a planilha será dimensionada quando impressa. Só se aplica a 'planilhas.
-    End With
-    
-End Function
-Private Function estiliza()
-    Dim descs, cabecalho As String
-    Dim efeitar As estilizar
-    
-    cabecalho = "A1:F1" 'range do cabeçalho
-    descs = "A3:F3" 'range das descrições
-    
-    Set enfeitar = New estilizar 'instancia a classe
-    
-        enfeitar.cabecalho cabecalho 'estiliza o cabecalho
-        
-        enfeitar.titulos descs 'Estiliza os titulos e as colunas
-        
-    Set enfeitar = Nothing 'Destroi a classe
-
-End Function
 Private Function criaNovaPlanilha()
     Workbooks.Add 'Cria uma planilha
 End Function
-Private Function verificaNome(ByVal nome As String, ByVal extensao As String) As String
-    Dim arquivo As Variant
-    Dim novoNome As String
-    Dim contador As Integer
-    Dim verificado As Boolean
-    
-    contador = 2 'Acompanha contagem de itens com mesmo nome
-    
-    nome = Left(nome, 100) 'Pega os 100 primeiros caracteress do titulo caso seja extenso
-    novoNome = nome 'Armazenará o novo nome
-    
-    arquivo = ThisWorkbook.Path & "\Programas\" & UCase(extensao) & "\" 'caminho do arquivo
-    
-    'enquanto não encontrar um nome que não existe
-    Do While Dir(arquivo & novoNome & "." & extensao) <> vbNullString 'Se o arquivo com esse nome já existir
-        novoNome = nome & "(" & contador & ")" 'Adiciona um contador ao nome
-        contador = contador + 1
-    Loop
-    
-    verificaNome = novoNome 'Retorna o nome verificado
-    
-End Function
-Private Function salvaComo(ByVal nome, extensao As String) As Boolean
-
-salvaComo = True
-    
-    On Error GoTo restart: 'Se der erro exibe uma mensagem de erro
-    
-    If extensao = "txt" Then
-        ActiveWorkbook.SaveAs ThisWorkbook.Path & "/Programas/" & UCase(extensao) & "/" & nome & "." & extensao, xlText 'Salva como Txt
-    ElseIf extensao = "html" Then
-        ActiveWorkbook.SaveAs ThisWorkbook.Path & "/Programas/" & UCase(extensao) & "/" & nome & "." & extensao, xlHtml 'Salva como Html
-    ElseIf extensao = "xlsx" Then
-        ActiveWorkbook.SaveAs ThisWorkbook.Path & "/Programas/" & UCase(extensao) & "/" & nome & "." & extensao, xlWorkbookDefault 'Salva como xlsx
-    End If
-    
-    If extensao <> "xlsx" Then ActiveWorkbook.Close False 'Fecha a planilha se não foi selecionado o botão XLSX
-    
-Exit Function
-restart:
-    salvaComo = False
-    MsgBox "Erro ao salvar arquivo ." & extensao & vbNewLine & vbNewLine & "Verifique o nome (titulo) e tente novamente ou salve manualmente a planilha criada!", vbOKOnly Or vbCritical, "ERRO AO SALVAR"
-End Function
-Private Function exportaPDF(ByVal nome As String) As Boolean
-exportaPDF = True
-    On Error GoTo restart: 'Se der erro exibe a mensagem de erro
-    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=ThisWorkbook.Path & "/Programas/PDF/" & nome & ".PDF" 'Exporta como PDF
-    ActiveWorkbook.Close False 'Fecha a planilha criada para organização das informações
-
-Exit Function
-restart:
-    exportaPDF = False
-    MsgBox "Erro ao salvar o arquivo!" & vbNewLine & vbNewLine & "Verifique o nome (titulo) e tente novamente ou salve manualmente a planilha criada!", vbOKOnly Or vbCritical, "ERRO AO SALVAR"
-    
-End Function
-Private Function exportaDOC(ByVal nome, titulo, data As String) As Boolean
-    exportaDOC = True
-    Dim uLin As Integer
-    Dim cabecalho As Word.Range
-    Dim app As Word.Application
-        
-    uLin = ActiveWorkbook.ActiveSheet.Range("A3").End(xlDown).Row 'Atribui a ultima linha preenchida na variavel
-    
-    ActiveWorkbook.ActiveSheet.Range("A3:F" & uLin).Copy 'copia todos os valores
-    
-    ActiveWorkbook.Close False 'fecha a planilha
-        
-    'Se der erro continua para a próxima tentativa
-    On Error Resume Next
-    Set app = GetObject(, "Word.Application") 'Define o app word caso ja esteja instanciado
-    
-    'Se der erro exibe a mensagem e cancela a operação
-    On Error GoTo ErroAoInstanciar
-    
-    'Se a primeira tentativa não deu certo, tenta novamente
-    If app Is Nothing Then
-        Set app = New Word.Application 'Instancia uma nova aplicação word
-    End If
-        
-    app.Visible = True 'torna visivel
-    app.Activate 'Ativa a janela
-    app.Documents.Add 'Cria o documento
-    app.ActiveDocument.Activate
-    
-    'configura o setup da pagina
-    'With app.ActiveDocument.PageSetup
-    app.ActiveDocument.PageSetup.LineNumbering.Active = False
-    app.ActiveDocument.PageSetup.Orientation = wdOrientPortrait
-    app.ActiveDocument.PageSetup.TopMargin = CentimetersToPoints(0.2)
-    app.ActiveDocument.PageSetup.BottomMargin = CentimetersToPoints(0.5)
-    app.ActiveDocument.PageSetup.LeftMargin = CentimetersToPoints(1)
-    app.ActiveDocument.PageSetup.RightMargin = CentimetersToPoints(1)
-    app.ActiveDocument.PageSetup.Gutter = CentimetersToPoints(0)
-    app.ActiveDocument.PageSetup.HeaderDistance = CentimetersToPoints(1.25)
-    app.ActiveDocument.PageSetup.FooterDistance = CentimetersToPoints(1.25)
-    app.ActiveDocument.PageSetup.FirstPageTray = wdPrinterDefaultBin
-    app.ActiveDocument.PageSetup.OtherPagesTray = wdPrinterDefaultBin
-    app.ActiveDocument.PageSetup.SectionStart = wdSectionNewPage
-    app.ActiveDocument.PageSetup.VerticalAlignment = wdAlignVerticalTop
-    app.ActiveDocument.PageSetup.SuppressEndnotes = False
-    app.ActiveDocument.PageSetup.MirrorMargins = False
-    app.ActiveDocument.PageSetup.TwoPagesOnOne = False
-    'End With
-    
-    Set cabecalho = app.ActiveDocument.Sections(1).Headers(wdHeaderFooterPrimary).Range 'define o cabecalho
-    
-    'estiliza o cabecalho
-    With cabecalho
-        .ParagraphFormat.Alignment = wdAlignParagraphCenter
-        .Text = titulo & vbNewLine & data
-        .Font.bold = True
-        .Font.Size = 20
-        .Font.Name = "Arial"
-        .Font.Color = vbBlack
-    End With
-    
-    app.Selection.TypeParagraph 'adiciona um parágrafo
-    app.Selection.TypeParagraph 'adiciona um parágrafo
-    
-    app.Selection.PasteAndFormat wdFormatOriginalFormatting 'cola as informações do excel no word
-    
-    app.ActiveDocument.SaveAs2 ThisWorkbook.Path & "\Programas\DOC\" & nome & ".doc" 'salva o documento
-    
-    Set app = Nothing 'Destroi a instancia
-
-Exit Function
-ErroAoInstanciar:
-    exportaDOC = False
-    MsgBox "Erro ao abrir o word:" & vbNewLine & vbNewLine & Err.Description, vbCritical Or vbOKOnly, "ERRO"
-End Function
-Private Function adaptaArquivo(ByVal extensao As String)
-    Dim uLin As Integer
-    
-    With ActiveWorkbook.ActiveSheet
-    
-        If extensao = "html" Then
-            
-            uLin = .Range("A3").End(xlDown).Row 'Ultima linha preenchida
-            
-            'Iteracao em cada celula das linhas preenchidas
-            For Each celula In .Range("A1:F" & uLin)
-                celula.WrapText = False
-            Next
-                
-            Range("A1:F" & uLin).Columns.AutoFit 'ajuste automatica das colunas
-            Range("A4:F" & uLin).Rows.AutoFit 'ajuste automatico das linhas
-        'Se for txt entao exclui o cabeçalho
-        ElseIf extensao = "txt" Then
-            Range("A3:F3").Clear
-        End If
-    End With
-    
-End Function
-Private Function writeInfos()
-
-    'tipagem
-    Dim enfeitar As estilizar
-    Dim contador, zerados, objs_linha As Integer
-        
-    Set enfeitar = New estilizar 'instancia a classe de estilização
-    contador = 0 'Acompanha se todos os objetos da linha foram verificados
-    zerados = 0 'Acompanha a quantidade de linhas com objetos vazios que foram excluidas
-    objs_linha = 0 'Acompanha se todos objetos da linha foram verificados
-
-    Call configura_impressao 'Configura parâmetros de impressão
-    Call estiliza 'Estiliza a planilha gerada
-
-    With ActiveWorkbook
-        'valores cabeçalho
-        Cells(1, 1).Value = UCase(Me.txtTitulo.Value)
-        Cells(1, 5).Value = Me.txtData.Value
-        
-        'titulos
-        Cells(3, 1).Value = "N°"
-        Cells(3, 2).Value = "DESCRIÇÃO"
-        Cells(3, 3).Value = "PARTICIPANTES"
-        Cells(3, 4).Value = "INSTRUMENTOS"
-        Cells(3, 5).Value = "MÍDIA"
-        Cells(3, 6).Value = "PROJEÇÃO"
-        
-        'corpo
-        For Each Obj In Me.Controls 'Loop em cada controle do formulario'
-            
-            'se o nome do objeto termina com um número
-            If IsNumeric(Right(Obj.Name, 2)) = True Then
-                linha = Int(Right(Obj.Name, 2) + 3) - zerados 'define o n° do objeto da vez
-            'se é um numero < 10
-            ElseIf IsNumeric(Right(Obj.Name, 1)) = True Then
-                linha = Int(Right(Obj.Name, 1) + 3) - zerados 'define a linha da vez'
-            End If
-            
-            'Insere o n° da sequência'
-            If InStr(1, Obj.Name, "lbContador") >= 1 Then
-                Cells(linha, 1).Value = Str(Int(Obj.Caption) - zerados) & " -"
-                enfeitar.corpo linha, 1, True
-                objs_linha = objs_linha + 1
-                
-            'Insere as descrições'
-            ElseIf InStr(1, Obj.Name, "txtDescricao") >= 1 Then 'Se o objeto é um txtBox de descrição
-                If Len(Obj.Value) > 0 Then 'Se esta preenchido
-                    Cells(linha, 2).Value = RTrim(LTrim(Obj.Value))
-                Else
-                    contador = contador + 1
-                End If
-                
-                objs_linha = objs_linha + 1
-                enfeitar.corpo linha, 2
-                
-            'Insere os participantes'
-            ElseIf InStr(1, Obj.Name, "txtParticipantes") >= 1 Then 'Se é um txtBox dos participantes
-                If Len(Obj.Value) > 0 Then 'Se esta preenchido
-                    Cells(linha, 3).Value = RTrim(LTrim(Obj.Value))
-                Else
-                    contador = contador + 1
-                End If
-                
-                objs_linha = objs_linha + 1
-                enfeitar.corpo linha, 3
-                
-            'Insere os Instrumentos'
-            ElseIf InStr(1, Obj.Name, "txtInstrumentos") >= 1 Then 'Se é um txtBox dos instrumentos
-                If Len(Obj.Value) > 0 Then 'Se esta preenchido
-                    Cells(linha, 4).Value = RTrim(LTrim(Obj.Value))
-                Else
-                    contador = contador + 1
-                End If
-                
-                objs_linha = objs_linha + 1
-                enfeitar.corpo linha, 4
-                
-            'Insere as mídias'
-            ElseIf InStr(1, Obj.Name, "txtProjecao") >= 1 Then 'Se é um txtBox da projeção
-                If Len(Obj.Value) > 0 Then 'Se esta preenchido
-                    Cells(linha, 5).Value = RTrim(LTrim(Obj.Value))
-                Else
-                    contador = contador + 1
-                End If
-                
-                objs_linha = objs_linha + 1
-                enfeitar.corpo linha, 5
-                
-            'Insere o tipo de projeção'
-            ElseIf InStr(1, Obj.Name, "listBoxTipoProjecao") >= 1 Then 'Se é o listBox do tipo de projeção
-                If Obj.ListIndex >= 0 Then 'Se tem algum valor selecionado
-                    Cells(linha, 6).Value = RTrim(LTrim(Obj.Value))
-                Else
-                    contador = contador + 1
-                End If
-                
-                objs_linha = objs_linha + 1
-                'Se todos campos estiverem vazio, estiliza a linha sem o parametro de espaçamento de linha
-                If contador >= 5 Then enfeitar.corpo linha, 6, True, 10 Else enfeitar.corpo linha, 6, True, 10, True
-                
-            End If
-            
-            If objs_linha >= 6 Then 'Se todos os objetos da linha foram verificados no for
-                If contador >= 5 Then 'se nenhum foi preenchido
-                    zerados = zerados + 1 'Aumenta um na variavel de linhas zeradas
-                End If
-                contador = 0
-                objs_linha = 0
-            End If
-        Next
-    End With
-    
-    Set enfeitar = Nothing 'destroi a instancia da classe
-    
-End Function
 Private Function verificaPreenchimento() As Boolean
-
     Dim preenchido As Boolean
     Dim firstEmpty As Boolean
     
     firstEmpty = False
     
-    'Se não foi informado um titulo para a programação é exibido uma mensagem de erro
+    'Se não foi informado um titulo
     If Me.txtTitulo.Value = "" Then
         verificaPreenchimento = False
         MsgBox "Insira um título para a programação!", vbInformation, "Título Necessário!"
@@ -395,9 +60,9 @@ Private Function verificaPreenchimento() As Boolean
         Exit Function
     End If
     
-    For Each Obj In Me.Controls 'Loop em cada controle do formulario'
+    For Each Obj In Me.Controls 'Loop em cada controle do formulario
         
-        'Caso seja textBox e não seja o titulo e a data'
+        'Caso seja textBox e não seja o titulo e a data
         If InStr(1, Obj.Name, "txt") >= 1 And InStr(1, Obj.Name, "Titulo") <= 0 And InStr(1, Obj.Name, "Data") <= 0 Then
             If Obj.Value <> "" Then
                 verificaPreenchimento = True
@@ -419,11 +84,12 @@ Private Function verificaPreenchimento() As Boolean
 End Function
 Private Function paginacao(ByVal pagAtual As Integer)
     Dim numItem As Integer
+    
     numItem = 0
     
     'Iteração em cada objeto
     For Each Obj In Me.Controls
-        'Se os dois ultimos caracteress do obj são numéricos
+        'Se os dois ultimos caracteres do obj são numéricos
         If IsNumeric(Right(Obj.Name, 2)) = True Then
             numItem = Right(Obj.Name, 2)
         'Se o ultimo caractere do obj é numérico
@@ -432,12 +98,14 @@ Private Function paginacao(ByVal pagAtual As Integer)
         End If
         
         'Se for algum dos campos criados dinamicamente
-        If InStr(1, Obj.Name, "lbContador") >= 1 Or InStr(1, Obj.Name, "txtDescricao") >= 1 Or InStr(1, Obj.Name, "txtParticipantes") >= 1 Or InStr(1, Obj.Name, "txtInstrumentos") >= 1 Or InStr(1, Obj.Name, "txtProjecao") >= 1 Or InStr(1, Obj.Name, "listBoxTipoProjecao") >= 1 Then
+        If InStr(1, Obj.Name, "lbContador") >= 1 Or InStr(1, Obj.Name, "txtDescricao") >= 1 Or _
+        InStr(1, Obj.Name, "txtParticipantes") >= 1 Or InStr(1, Obj.Name, "txtInstrumentos") >= 1 Or _
+        InStr(1, Obj.Name, "txtProjecao") >= 1 Or InStr(1, Obj.Name, "listBoxTipoProjecao") >= 1 Then
             'Se o objeto está entre os que devem ser renderizados conforme a página atual
-            If numItem > itensPorPagina * pagAtual - itensPorPagina And numItem <= itensPorPagina * pagAtual Then
+            If numItem > itensPorPagina * pagAtual - itensPorPagina _
+            And numItem <= itensPorPagina * pagAtual Then
                 Obj.Visible = True 'Torna o obj visivel
             Else
-                
                 Obj.Visible = False 'Torna o obj invisivel
             End If
         End If
@@ -447,20 +115,23 @@ End Function
 Private Sub btnGerar_Click()
     Dim aba As Worksheet
     Dim paginaAtual As Range
-    
-    'Tipagem das variaveis'
-    Dim newLabel, newTxtDesc, newTxtParticipants, newTxtInstrumentos, newTxtProjecao, newListBox As Control
+    Dim newLabel As Control
+    Dim newTxtDesc As Control
+    Dim newTxtParticipants As Control
+    Dim newTxtInstrumentos As Control
+    Dim newTxtProjecao As Control
+    Dim newListBox As Control
 
     Set paginaAtual = ThisWorkbook.Worksheets("controle").Range("B2") 'Pega a pagina atual
     
     'Se ja tem 8 itens criados
     If contagem.Value >= itensPorPagina * paginaAtual.Value Then
-        paginaAtual.Value = paginaAtual.Value + 1 'Soma a pagina
-        Me.lNumPagina.Caption = Str(paginaAtual.Value) 'Muda o caption do label da página atual
-        paginacao paginaAtual.Value 'Chama a função que deixa os objetos com a devida visibilidade
+        paginaAtual.Value = paginaAtual.Value + 1
+        Me.lNumPagina.Caption = Str(paginaAtual.Value)
+        Call paginacao(paginaAtual.Value)  'Chama a função que deixa os objetos com a devida visibilidade
     End If
     
-    'chama a função que redimensiona e posiciona os objetos'
+    'redimensiona e posiciona os objetos
     Call redimensiona
     
     contagem.Value = contagem.Value + 1 'Soma o contador de itens criados
@@ -544,7 +215,8 @@ Private Sub btnGerar_Click()
 
 End Sub
 Private Sub redimensiona()
-    Dim itensNaPagina, paginasTotal As Integer
+    Dim itensNaPagina As Integer
+    Dim paginasTotal As Integer
     Dim paginaAtual As Range
     Set paginaAtual = ThisWorkbook.Worksheets("controle").Range("B2")
     
@@ -578,27 +250,32 @@ End Sub
 Private Sub btnImportar_Click()
     Dim planilha As Workbook
     Dim cabecalho As Range
-    Dim contagemColunas, quantItens, objNumero As Integer
+    Dim contagemColunas As Integer
+    Dim quantItens As Integer
+    Dim objNumero As Integer
     Dim confirmado As Boolean
     
-    confirmado = confirmaImportacao 'Chama função que verifica se algum campo está preenchido
-    'Se estiver
+    confirmado = confirmaImportacao
+    
     If confirmado = False Then
         MsgBox "Importação cancelada!", vbOKOnly Or vbInformation, "ANULADO"
-        Exit Sub 'Sai da função
+        Exit Sub
     End If
     
     contagemColunas = 0
     
-    caminho = Application.GetOpenFilename("Planilha Eletrônica do Excel (*.xlsx), *.xlsx", , "Selecionar Arquivo", , False) 'Abre o explorador de arquivos para seleção manual da planilha
+    ' Abre o explorador de arquivos
+    caminho = Application.GetOpenFilename("Planilha Eletrônica do Excel (*.xlsx), *.xlsx", , "Selecionar Arquivo", , False)
     
     If caminho <> False Then 'Se selecionou algum arquivo
         
-        On Error GoTo ErroAoAbrir: 'Se der erro então exibe uma mensagem
+        ' Tratativa de erro
+        On Error GoTo ErroAoAbrir:
+        
         Set planilha = Workbooks.Open(caminho, ReadOnly:=False, editable:=True)  'Abre a planilha
         Set cabecalho = planilha.Worksheets(1).Range("A3:F3") 'Define o cabeçalho
     
-        On Error GoTo 0 'Encerra a trativa de erro
+        On Error GoTo 0
         
         For Each celula In cabecalho 'Loop no cabecalho
             If InStr(1, celula.Value, "N°") >= 1 Then 'Se é a coluna N°
@@ -633,7 +310,7 @@ Private Sub btnImportar_Click()
                 'Loop para ver se ja existem objetos criados com a respectiva linha da planilha
                 For Each Obj In Me.Controls
                 
-                    'PEGA A SEQUENCIA DO OBJETO
+                    'Obtém a sequência do objeto
                     If IsNumeric(Right(Obj.Name, 2)) = True Then 'Se os dois ultimos caracteress do nome é numérico
                         objNumero = Right(Obj.Name, 2)
                     ElseIf IsNumeric(Right(Obj.Name, 1)) = True Then 'Se o ultimo caractere do nome é numerico
@@ -692,16 +369,12 @@ ErroAoAbrir:
     MsgBox "Erro ao tentar abrir a planilha!" & vbNewLine & Err.Description, vbCritical Or vbOKOnly, "ERRO"
     On Error Resume Next
     planilha.Close 'Fecha a planilha que foi importada
-    
-    
-    
 End Sub
-
 Private Sub btnPreencher_Click()
-'corpo'
+
         For Each Obj In Me.Controls 'Loop em cada controle do formulario'
             
-            'se é um numero na cada da dezena
+            'se é um numero na casa da dezena
             If IsNumeric(Right(Obj.Name, 2)) = True Then
                 linha = Int(Right(Obj.Name, 2)) 'define a linha da vez'
             'se é um numero < 10
@@ -741,23 +414,168 @@ Private Sub btnPreencher_Click()
         Next
 End Sub
 Private Sub btnHtml_Click()
-    Dim preenchido, salvo As Boolean
+    Dim preenchido As Boolean
+    Dim salvo As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
     
     preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
     
     If preenchido = True Then
-        Call criaNovaPlanilha 'Cria uma nova planilha
-        Call writeInfos 'Escreve e estiliza os dados
-        Call adaptaArquivo("html") 'Realiza os ajustes conforme a respectivas extensão
-        Call verifica_pasta 'Verifica a existência da pasta de salvamento
-        nomeValido = Trim(verificaNome(Trim(Me.txtTitulo), "html")) 'Retorna um nome válido
-        salvo = salvaComo(nomeValido, "html")  'Salva o arquivo
+        ' Instâncias
+        Set exporter = New clsExporter
+        Set sysManager = New clsSystem
+    
+        criaNovaPlanilha 'Cria uma nova planilha
+        
+        exporter.writeInfos ' Escreve e estiliza os dados
+        Call exporter.adaptaArquivo("html")  ' Realiza os ajustes conforme a extensão
+        sysManager.verificaPasta ' Verifica a existência da pasta de salvamento
+        nomeValido = exporter.verificaNome(Trim(Me.txtTitulo), "html") 'Retorna um nome válido
+        salvo = sysManager.salvaComo(nomeValido, "html") 'Salva o arquivo
+
         'Se foi salvo com sucesso
         If salvo = True Then
-            Call abrirArquivos(nomeValido, "html") 'Abre o arquivo
+            Call sysManager.abrirArquivos(nomeValido, "html")
             MsgBox "HTML criado com sucesso!", vbOKOnly Or vbInformation
         End If
     End If
+End Sub
+Private Sub btnTxt_Click()
+    Dim preenchido As Boolean
+    Dim salvo As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
+    
+    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
+    
+    If preenchido = True Then
+        ' Instâncias
+        Set exporter = New clsExporter
+        Set sysManager = New clsSystem
+    
+        Call criaNovaPlanilha 'Cria uma nova planilha
+        
+        exporter.writeInfos ' Escreve e estiliza os dados
+        exporter.adaptaArquivo ("txt") ' Realiza os ajustes conforme a extensão
+        sysManager.verificaPasta ' Verifica a existência da pasta de salvamento
+        nomeValido = exporter.verificaNome(Trim(Me.txtTitulo), "txt") 'Retorna um nome válido
+        salvo = sysManager.salvaComo(nomeValido, "txt") 'Salva o arquivo
+
+        'Se foi salvo com sucesso
+        If salvo = True Then
+            Call sysManager.abrirArquivos(nomeValido, "txt")
+            MsgBox "TXT criado com sucesso!", vbOKOnly Or vbInformation
+        End If
+    End If
+End Sub
+Private Sub btnPdf_Click()
+    Dim preenchido As Boolean
+    Dim exportado As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
+    
+    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
+    
+    If preenchido = True Then
+        ' Instâncias
+        Set exporter = New clsExporter
+        Set sysManager = New clsSystem
+    
+        Call criaNovaPlanilha 'Cria uma nova planilha
+        
+        exporter.writeInfos ' Escreve e estiliza os dados
+        sysManager.verificaPasta 'Verifica a existencia da pasta e cria caso nao exista
+        nomeValido = exporter.verificaNome(Trim(Me.txtTitulo), "pdf") 'Retorna um nome válido
+        exportado = exporter.exportaPDF(nomeValido) 'Exporta em PDF
+        
+        'Se foi salvo com sucesso
+        If exportado = True Then
+            Call sysManager.abrirArquivos(nomeValido, "pdf") 'Abre o arquivo
+            ThisWorkbook.Activate
+            MsgBox "PDF criado com sucesso!", vbOKOnly Or vbInformation
+        End If
+    End If
+End Sub
+Private Sub btnDoc_Click()
+    Dim preenchido As Boolean
+    Dim exportado As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
+    
+    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
+    
+    If preenchido = True Then
+        ' Instâncias
+        Set exporter = New clsExporter
+        Set sysManager = New clsSystem
+    
+        Call criaNovaPlanilha 'Cria uma nova planilha
+        
+        exporter.writeInfos ' Escreve e estiliza os dados
+        sysManager.verificaPasta 'Verifica a existencia da pasta e cria caso nao exista
+        nomeValido = exporter.verificaNome(Trim(Me.txtTitulo), "doc") 'Retorna um nome válido
+        exportado = exporter.exportaDOC(nomeValido, UCase(Me.txtTitulo), Me.txtData) 'Exporta como DOC
+        
+        'Se foi exportado com sucesso
+        If exportado = True Then
+            Call sysManager.abrirArquivos(nomeValido, "doc") 'Abre o arquivo
+            MsgBox "Arquivo Word (DOC) criado e salvo com sucesso!", vbOKOnly Or vbInformation
+        End If
+    End If
+End Sub
+Private Sub btnXlsx_Click()
+    Dim preenchido As Boolean
+    Dim salvo As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
+
+    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
+    
+    If preenchido = True Then
+        ' Instâncias
+        Set exporter = New clsExporter
+        Set sysManager = New clsSystem
+        
+        Call criaNovaPlanilha 'Cria uma nova planilha
+        
+        exporter.writeInfos  'Escreve e estiliza os dados
+        sysManager.verificaPasta 'Verifica a existencia da pasta e cria caso nao exista
+        nomeValido = exporter.verificaNome(Trim(Me.txtTitulo), "xlsx") 'Retorna um nome válido
+        salvo = sysManager.salvaComo(nomeValido, "xlsx")  'Salva o arquivo
+        
+        'Se foi salvo com sucesso
+        If salvo = True Then
+            ThisWorkbook.Activate
+            MsgBox "Planilha criada com sucesso!", vbOKOnly Or vbInformation
+        End If
+    End If
+    
+End Sub
+Private Sub btnImprimir_Click()
+
+    Dim preenchido As Boolean
+    Dim exporter As clsExporter
+    Dim sysManager As clsSystem
+
+    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
+    
+        If preenchido = True Then
+            ' Instâncias
+            Set exporter = New clsExporter
+            Set sysManager = New clsSystem
+            
+            Call criaNovaPlanilha 'Cria uma nova planilha
+            exporter.writeInfos 'Escreve e estiliza os dados
+            
+            'Se der erro vai para erro:
+            On Error GoTo erro
+            ActiveWorkbook.ActiveSheet.PrintOut 'Imprime a aba ativa
+        End If
+        
+Exit Sub
+erro:
+    MsgBox "Não foi possível realizar a impressão automática!" & vbNewLine & "Verifique se alguma impressora está configurada ou gere o arquivo PDF, DOC ou XLSX e imprima manualmente!", vbCritical Or vbOKOnly
 End Sub
 Private Sub btnPrevious_Click()
     Dim paginaAtual As Range 'Tipagem
@@ -775,10 +593,8 @@ Private Sub btnPrevious_Click()
     
 End Sub
 Private Sub btnNext_Click()
-    'Tipagem
     Dim paginaAtual As Range
 
-    'Define as variaveis
     Set paginaAtual = ThisWorkbook.Worksheets("controle").Range("B2")
     
     'Se n for a ultima pagina
@@ -789,98 +605,6 @@ Private Sub btnNext_Click()
         Call redimensiona
     End If
 
-End Sub
-Private Sub btnTxt_Click()
-    Dim preenchido, salvo As Boolean
-    
-    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
-    
-    If preenchido = True Then
-        Call criaNovaPlanilha 'Cria uma nova planilha
-        Call writeInfos 'Escreve e estiliza os dados
-        Call adaptaArquivo("txt") 'Realiza os ajustes conforme a respectivas extensão
-        Call verifica_pasta 'Verifica a existência da pasta de salvamento
-        nomeValido = Trim(verificaNome(Trim(Me.txtTitulo), "txt")) 'Retorna um nome válido
-        salvo = salvaComo(nomeValido, "txt")  'Salva o arquivo
-        'Se foi salvo com sucesso
-        If salvo = True Then
-            Call abrirArquivos(nomeValido, "txt") 'Abre o arquivo
-            ThisWorkbook.Activate
-            MsgBox "TXT criado com sucesso!", vbOKOnly Or vbInformation
-        End If
-    End If
-End Sub
-Private Sub btnPdf_Click()
-    Dim preenchido, exportado As Boolean
-    
-    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
-    
-    If preenchido = True Then
-        Call criaNovaPlanilha 'Cria uma nova planilha
-        Call writeInfos 'Escreve e estiliza os dados
-        Call verifica_pasta 'Verifica a existencia da pasta e cria caso nao exista
-        nomeValido = Trim(verificaNome(Trim(Me.txtTitulo), "pdf")) 'Retorna um nome válido
-        exportado = exportaPDF(nomeValido)  'Exporta em PDF
-        'Se foi salvo com sucesso
-        If exportado = True Then
-            Call abrirArquivos(nomeValido, "pdf") 'Abre o arquivo
-            ThisWorkbook.Activate
-            MsgBox "PDF criado com sucesso!", vbOKOnly Or vbInformation
-        End If
-    End If
-End Sub
-Private Sub btnDoc_Click()
-Dim preenchido, exportado As Boolean
-    
-    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
-    
-    If preenchido = True Then
-        Call criaNovaPlanilha 'Cria uma nova planilha
-        Call writeInfos 'Escreve e estiliza os dados
-        Call verifica_pasta 'Verifica a existencia da pasta e cria caso nao exista
-        nomeValido = Trim(verificaNome(Trim(Me.txtTitulo), "doc")) 'Retorna um nome válido
-        exportado = exportaDOC(nomeValido, UCase(Me.txtTitulo), Me.txtData) 'Exporta como DOC
-        'Se foi exportado com sucesso
-        If exportado = True Then
-            Call abrirArquivos(nomeValido, "doc") 'Abre o arquivo
-            MsgBox "Arquivo Word (DOC) criado e salvo com sucesso!", vbOKOnly Or vbInformation
-        End If
-    End If
-End Sub
-Private Sub btnXlsx_Click()
-Dim preenchido, salvo As Boolean
-
-    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
-    
-    If preenchido = True Then
-        Call criaNovaPlanilha 'Cria uma nova planilha
-        Call writeInfos 'Escreve e estiliza os dados
-        Call verifica_pasta 'Verifica a existencia da pasta e cria caso nao exista
-        nomeValido = Trim(verificaNome(Trim(Me.txtTitulo), "xlsx")) 'Retorna um nome válido
-        salvo = salvaComo(nomeValido, "xlsx")  'Salva o arquivo
-        'Se foi salvo com sucesso
-        If salvo = True Then
-            ThisWorkbook.Activate
-            MsgBox "Planilha criada com sucesso!", vbOKOnly Or vbInformation
-        End If
-    End If
-    
-End Sub
-Private Sub btnImprimir_Click()
-
-    preenchido = verificaPreenchimento() 'Verifica se os campos necessários foram preenchidos
-    
-        If preenchido = True Then
-            Call criaNovaPlanilha 'Cria uma nova planilha
-            Call writeInfos 'Escreve e estiliza os dados
-            'Se der erro exibe mensagem
-            On Error GoTo erro
-            ActiveWorkbook.ActiveSheet.PrintOut 'Imprime a aba ativa
-        End If
-        
-Exit Sub
-erro:
-    MsgBox "Não foi possível realizar a impressão automática!" & vbNewLine & "Verifique se alguma impressora está configurada ou gere o arquivo PDF, DOC ou XLSX e imprima manualmente!", vbCritical Or vbOKOnly
 End Sub
 Private Sub UserForm_Initialize()
     Dim aba As Worksheet
